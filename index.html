@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Jogo do Cidadão</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      text-align: center;
+      margin-top: 100px;
+    }
+    button {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 Jogo do Cidadão</h1>
+  <p id="pergunta">Pergunta: O que é cidadania?</p>
+  <div id="opcoes">
+    <button onclick="responder('A')">A) Ter direitos e deveres</button>
+    <button onclick="responder('B')">B) Morar na cidade</button>
+    <button onclick="responder('C')">C) Ter CPF</button>
+  </div>
+  <p id="resultado"></p>
+
+  <script>
+    function responder(opcao) {
+      const resultado = document.getElementById('resultado');
+      if (opcao === 'A') {
+        resultado.textContent = '✅ Correto! Cidadania é ter direitos e deveres.';
+      } else {
+        resultado.textContent = '❌ Errado! Tente novamente.';
+      }
+    }
+  </script>
+</body>
+</html>
