@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Jogo do Cidadão — Quiz</title>
+  <style>
+    body{font-family:Inter,Arial, sans-serif;background:#f3f6fb;color:#111;margin:0;padding:20px;display:flex;align-items:center;justify-content:center;min-height:100vh}
+    .card{width:100%;max-width:720px;background:white;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.12);padding:28px}
+    h1{margin:0 0 10px;font-size:22px}
+    .meta{color:#666;font-size:14px;margin-bottom:20px}
+    .pergunta{font-size:18px;margin:18px 0}
+    .opcoes{display:flex;flex-direction:column;gap:10px}
+    .opcao{padding:12px 14px;border-radius:10px;border:1px solid #e6eef9;background:#fff;cursor:pointer;text-align:left;font-size:16px}
+    .opcao:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.06)}
+    .opcao.correta{background:#e6ffef;border-color:#60d394}
+    .opcao.errada{background:#ffecec;border-color:#ff9a9a}
+    .botoes{display:flex;gap:10px;margin-top:18px}
+    button{padding:10px 14px;border-radius:8px;border:none;cursor:pointer}
+    .btn-next{background:#2563eb;color:white}
+    .btn-restart{background:#eee}
+    .prog{height:10px;background:#eee;border-radius:10px;overflow:hidden;margin-top:14px}
+    .prog > i{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#60a5fa);width:0%}
+    .fim{text-align:center}
+    .score{font-size:20px;margin:14px 0}
+    footer{margin-top:10px;color:#666;font-size:13px;text-align:center}
+    @media(max-width:520px){.card{padding:18px}}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🧠 Jogo do Cidadão — Quiz</h1>
+    <div class="meta">Responda as perguntas. Acumule pontos e passe de fase!</div>
+
+    <div id="jogo">
+      <div id="progresso" class="prog"><i id="bar"></i></div>
+      <p class="pergunta" id="pergunta">Carregando...</p>
+      <div id="opcoes" class="opcoes"></div>
+
+      <div class="botoes">
+        <button id="nextBtn" class="btn-next" style="display:none">Próxima</button>
+        <button id="reiniciarBtn" class="btn-restart" style="display:none">Reiniciar</button>
+      </div>
+    </div>
+
+    <div id="fim" class="fim" style="display:none">
+      <h2>Fim do Quiz!</h2>
+      <p class="score" id="scoreTexto"></p>
+      <button id="jogarNovamente" class="btn-next">Jogar novamente</button>
+    </div>
+
+    <footer>
+      <small>Dica: edite as perguntas no código (array <code>fases</code>).</small>
+    </footer>
+  </div>
+
+  <script>
+    /* ===========================
+       COMO FUNCIONA / O QUE EDITAR:
+       - O jogo usa um array fases. Cada fase contém um array de perguntas.
+       - Cada pergunta tem: {q: "texto", o: ["op1","op2"], c: índice_da_correta}
+       - Para adicionar mais perguntas ou fases, edite a lista abaixo.
+       ============================ */
+
+    const fases = [
+      // FASE 1
+      [
+        { q: "O que é cidadania?", o: ["Ter direitos e deveres","Ter um documento","Morar na cidade"], c: 0 },
+        { q: "Qual o documento usado para votar?", o: ["CPF","Título de Eleitor","RG"], c: 1 },
+        { q: "Qual prática ajuda a cidadania?", o: ["Desrespeitar regras","Votar","Sonegar impostos"], c: 1 }
+      ],
+      // FASE 2
+      [
+        { q: "Quem cria as leis no Brasil?", o: ["Executivo","Legislativo","Judiciário"], c: 1 },
+        { q: "Direitos fundamentais estão na:", o: ["Constituição","Agenda de escola","Prefeitura local"], c: 0 },
+        { q: "Ir às urnas é:", o: ["Prazer obrigatório","Exercício de cidadania","Irrelevante"], c: 1 }
+      ],
+      // FASE 3 (exemplo)
+      [
+        { q: "O que é voto facultativo?", o: ["Voto obrigatório para todos","Voto opcional para alguns (ex.: jovens)","Voto pago"], c: 1 },
+        { q: "Quem fiscaliza eleições?", o: ["TSE e TREs","MP3 players","ONGs esportivas"], c: 0 }
+      ]
+    ];
+
+    // Variáveis do jogo
+    let faseIndex = 0;
+    let perguntaIndex = 0;
+    let pontos = 0;
+    const totalFases = fases.length;
+
+    // Elementos DOM
+    const perguntaEl = document.getElementById("pergunta");
+    const opcoesEl = document.getElementById("opcoes");
+    const nextBtn = document.getElementById("nextBtn");
+    const reiniciarBtn = document.getElementById("reiniciarBtn");
+    const bar = document.getElementById("bar");
+    const fimEl = document.getElementById("fim");
+    const jogoEl = document.getElementById("jogo");
+    const scoreTexto = document.getElementById("scoreTexto");
+    const jogarNovamente = document.getElementById("jogarNovamente");
+
+    // Carrega primeira pergunta
+    function iniciarFase() {
+      perguntaIndex = 0;
+      atualizarBarra();
+      mostrarPergunta();
+    }
+
+    function atualizarBarra() {
+      const faseTotal = fases[faseIndex].length;
+      const progresso = ((perguntaIndex) / faseTotal) * 100;
+      bar.style.width = progresso + "%";
+    }
+
+    function mostrarPergunta() {
+      const fase = fases[faseIndex];
+      if (!fase) return fimDoJogo();
+
+      if (perguntaIndex >= fase.length) {
+        // acabou a fase
+        faseIndex++;
+        if (faseIndex >= totalFases) {
+          fimDoJogo();
+          return;
+        } else {
+          // iniciar próxima fase
+          perguntaIndex = 0;
+          alert("Parabéns — você passou para a próxima fase!");
+        }
+      }
+
+      const p = fases[faseIndex][perguntaIndex];
+      perguntaEl.textContent = Fase ${faseIndex + 1} - ${p.q};
+      opcoesEl.innerHTML = "";
+      p.o.forEach((texto, i) => {
+        const btn = document.createElement("button");
+        btn.className = "opcao";
+        btn.innerText = texto;
+        btn.onclick = () => selecionarResposta(btn, i === p.c);
+        opcoesEl.appendChild(btn);
+      });
+
+      atualizarBarra();
+      nextBtn.style.display = "none";
+      reiniciarBtn.style.display = "none";
+    }
+
+    function selecionarResposta(btn, correta) {
+      // marca visualmente
+      const botoes = opcoesEl.querySelectorAll("button");
+      botoes.forEach(b=>b.disabled = true);
+      if (correta) {
+        btn.classList.add("correta");
+        pontos += 10; // pontuação por acerto
+      } else {
+        btn.classList.add("errada");
+        // mostrar qual era a correta
+        const p = fases[faseIndex][perguntaIndex];
+        const botoesArr = Array.from(botoes);
+        const certoBtn = botoesArr[p.c];
+        if (certoBtn) certoBtn.classList.add("correta");
+      }
+      // mostra botão próxima
+      nextBtn.style.display = "inline-block";
+      reiniciarBtn.style.display = "inline-block";
+    }
+
+    nextBtn.onclick = () => {
+      perguntaIndex++;
+      mostrarPergunta();
+    };
+
+    reiniciarBtn.onclick = () => {
+      // reinicia a fase atual
+      perguntaIndex = 0;
+      mostrarPergunta();
+    };
+
+    function fimDoJogo() {
+      jogoEl.style.display = "none";
+      fimEl.style.display = "block";
+      scoreTexto.innerText = Sua pontuação: ${pontos} pontos. Você passou ${faseIndex} de ${totalFases} fases.;
+    }
+
+    jogarNovamente.onclick = () => {
+      // reiniciar tudo
+      faseIndex = 0;
+      perguntaIndex = 0;
+      pontos = 0;
+      fimEl.style.display = "none";
+      jogoEl.style.display = "block";
+      iniciarFase();
+    };
+
+    // iniciar
+    iniciarFase();
+  </script>
+</body>
+</html>
